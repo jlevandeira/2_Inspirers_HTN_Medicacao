@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Descarregar Dados JSON</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f7f9fa;
+            color: #333;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #f39c12;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2> Extrair Base de Dados (JSON)</h2>
+        <button id="downloadBtn">Descarregar ficheiro .json</button>
+        <p id="status"></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Credenciais rigorosas do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpEhKZEE4X1Lr7Sc5xbjnOJX5r6Hkuvfw",
+            authDomain: "inspire-test-cc1e3.firebaseapp.com",
+            projectId: "inspire-test-cc1e3",
+            storageBucket: "inspire-test-cc1e3.firebasestorage.app",
+            messagingSenderId: "305783033179",
+            appId: "1:305783033179:web:2b2d673567d6805bb55e7e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            status.innerText = "A consultar o Firebase... ⏳";
+
+            try {
+                // Obter interações por ordem cronológica (desde o início do teste)
+                const q = query(collection(db, "interactions"), orderBy("timestamp", "asc"));
+                const querySnapshot = await getDocs(q);
+
+                const data = [];
+                querySnapshot.forEach((doc) => {
+                    data.push(doc.data());
+                });
+
+                if (data.length === 0) {
+                    status.innerText = "O Firebase ainda não tem dados gravados (ou a coleção foi apagada).";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Transformar o objeto para JSON formatado
+                const ordemExata = [
+                    "session_id", "page_title", "time_enter", "event_Type",
+                    "timestamp", "click_x", "click_y", "eventInfo",
+                    "eventValue", "elementType", "operative_system"
+                ];
+                const jsonString = JSON.stringify(data, ordemExata, 2);
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                const dataHoje = new Date().toISOString().split('T')[0];
+                a.download = `dados_${dataHoje}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                status.innerText = "Download concluído! Pode verificar a pasta Transferências.";
+            } catch (error) {
+                console.error(error);
+                if (error.message.includes("indexes")) {
+                    status.innerHTML = "❌ O Firebase exige criação de Índice. Verifica a consola F12.";
+                } else {
+                    status.innerHTML = "❌ Ocorreu um erro ao descarregar: " + error.message;
+                }
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
