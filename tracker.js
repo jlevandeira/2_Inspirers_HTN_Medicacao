@@ -20,16 +20,35 @@
      * 8) Coordenadas do clique(feito)
      * 9) Duração na página(feito)
      * 10) Sistema operativo(feito)
+     * 11) Browser e Versão(feito)
      */
     const pageData = {
         session_id: sessionId,
         page_title: decodeURI(window.location.pathname.split('/').pop()) || 'index.html',
         time_enter: new Date().toISOString(),
-        operative_system: getOS()
+        operative_system: getOS(),
+        browser: getBrowser()
     };
 
     function genId() {
         return 'Sessao_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function getBrowser() {
+        const ua = navigator.userAgent;
+        let match = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+        let temp;
+        if (/trident/i.test(match[1])) {
+            temp = /\brv[ :]+(\d+)/g.exec(ua) || [];
+            return 'IE ' + (temp[1] || '');
+        }
+        if (match[1] === 'Chrome') {
+            temp = ua.match(/\b(OPR|Edge|Edg)\/(\d+)/);
+            if (temp !== null) return temp.slice(1).join(' ').replace('OPR', 'Opera').replace('Edg', 'Edge');
+        }
+        match = match[2] ? [match[1], match[2]] : [navigator.appName, navigator.appVersion, '-?'];
+        if ((temp = ua.match(/version\/(\d+)/i)) !== null) match.splice(1, 1, temp[1]);
+        return match.join(' ') || 'Desconhecido';
     }
 
     function getOS() {
@@ -53,8 +72,8 @@
 
     (async function initFirebase() {
         try {
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-            const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js");
+            const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js");
 
             const firebaseConfig = {
                 apiKey: "AIzaSyDpEhKZEE4X1Lr7Sc5xbjnOJX5r6Hkuvfw",
@@ -115,7 +134,8 @@
             eventInfo: eventDetails.eventInfo || "",
             eventValue: eventDetails.eventValue || "",
             elementType: eventDetails.elementType || eventDetails.eventType || "",
-            operative_system: pageData.operative_system
+            operative_system: pageData.operative_system,
+            browser: pageData.browser
         };
 
         console.log("DETETADO:", JSON.stringify(eventData, null, 2));
@@ -162,7 +182,14 @@
                 // Lógica normal
                 const select = elementoClicado.tagName === 'SELECT' ? elementoClicado : elementoClicado.querySelector('select') || elementoClicado.closest('.droplist')?.querySelector('select');
                 if (select) return select.options[select.selectedIndex]?.text || '';
-                return elementoClicado.innerText ? elementoClicado.innerText.substring(0, 50).trim() : '';
+
+                // 1. Tenta ler o texto original
+                const textoOriginal = elementoClicado.innerText ? elementoClicado.innerText.substring(0, 50).trim() : '';
+                if (textoOriginal !== '') return textoOriginal;
+
+                // 2. Se apanhou vazio, procura no botão inteiro
+                const widgetPai = elementoClicado.closest('[data-label]');
+                return (widgetPai && widgetPai.innerText) ? widgetPai.innerText.substring(0, 50).trim() : '';
             })(),
             elementType: tipoElemento,
             click_x: e.clientX,
