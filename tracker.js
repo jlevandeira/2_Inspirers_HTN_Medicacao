@@ -36,19 +36,12 @@
 
     function getBrowser() {
         const ua = navigator.userAgent;
-        let match = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-        let temp;
-        if (/trident/i.test(match[1])) {
-            temp = /\brv[ :]+(\d+)/g.exec(ua) || [];
-            return 'IE ' + (temp[1] || '');
-        }
-        if (match[1] === 'Chrome') {
-            temp = ua.match(/\b(OPR|Edge|Edg)\/(\d+)/);
-            if (temp !== null) return temp.slice(1).join(' ').replace('OPR', 'Opera').replace('Edg', 'Edge');
-        }
-        match = match[2] ? [match[1], match[2]] : [navigator.appName, navigator.appVersion, '-?'];
-        if ((temp = ua.match(/version\/(\d+)/i)) !== null) match.splice(1, 1, temp[1]);
-        return match.join(' ') || 'Desconhecido';
+        if (ua.includes("Edg/")) return "Edge " + ua.split("Edg/")[1].split(" ")[0];
+        if (ua.includes("OPR/")) return "Opera " + ua.split("OPR/")[1].split(" ")[0];
+        if (ua.includes("Chrome/")) return "Chrome " + ua.split("Chrome/")[1].split(" ")[0];
+        if (ua.includes("Firefox/")) return "Firefox " + ua.split("Firefox/")[1].split(" ")[0];
+        if (ua.includes("Safari/") && ua.includes("Version/")) return "Safari " + ua.split("Version/")[1].split(" ")[0];
+        return "Browser Desconhecido";
     }
 
     function getOS() {
