@@ -111,7 +111,7 @@
                 const ordemExata = [
                     "session_id", "page_title", "time_enter", "event_Type",
                     "timestamp", "click_x", "click_y", "eventInfo",
-                    "eventValue", "elementType", "operative_system"
+                    "eventValue", "elementType", "operative_system", "browser"
                 ];
 
                 // Criar o cabeçalho do CSV (usar ; em vez de , para o Excel em PT não meter tudo numa coluna)
@@ -140,7 +140,7 @@
                 a.click();
                 document.body.removeChild(a);
 
-                status.innerText = "✅ Download concluído! Pode verificar a pasta Transferências.";
+                status.innerText = "Download concluído! Pode verificar a pasta Transferências.";
             } catch (error) {
                 console.error(error);
                 if (error.message.includes("indexes")) {
