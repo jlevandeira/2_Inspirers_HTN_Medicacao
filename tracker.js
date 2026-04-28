@@ -65,7 +65,7 @@
 
     (async function initFirebase() {
         try {
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js");
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
             const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js");
 
             const firebaseConfig = {
